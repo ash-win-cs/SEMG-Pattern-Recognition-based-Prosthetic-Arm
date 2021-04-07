@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt # plotting
 import numpy as np # linear algebra
 from scipy import signal
 import scipy.fftpack
+import math
+import pywt
 
 
 def plot_signal(x, samplerate, chname):
@@ -131,9 +133,221 @@ def meanabsolutevalue(signal, frame, step, channel_name, show=False):
         plotfeature(signal, channel_name, fs, mav, "Mean  Absolute Value", step)
     return(mav)
 
+def log_detector(signal, frame, step, channel_name, show=False):
+    log_det = []
+    for i in range(frame, signal.size, step):
+        x = signal[i - frame:i]
+        log_det.append(np.exp(np.sum(np.log10(np.absolute(x))) / frame))
+    
+    if show:
+        plotfeature(signal, channel_name, fs, log_det, "Log Detector", step)
+    return(log_det)
+
+def wave_length(signal, frame, step, channel_name, show=False):
+    wl = []
+    for i in range(frame, signal.size, step):
+        x = signal[i - frame:i]
+        wl.append(np.sum(abs(np.diff(x))))  # Wavelength
+    
+    if show:
+        plotfeature(signal, channel_name, fs, wl, "Wavelength", step)
+    return(wl)
+
+def avg_amplitude_change(signal, frame, step, channel_name, show=False):
+    aac = []
+    for i in range(frame, signal.size, step):
+        x = signal[i - frame:i]
+        aac.append(np.sum(abs(np.diff(x))) / frame)  # Average Amplitude Change
+    
+    if show:
+        plotfeature(signal, channel_name, fs, aac, "Average Amplitude Change", step)
+    return(aac)
+
+def difference_absolute_standard_deviation(signal, frame, step, channel_name, show=False):
+    dasdv = []
+    for i in range(frame, signal.size, step):
+        x = signal[i - frame:i]
+        dasdv.append(math.sqrt((1 / (frame - 1)) * np.sum((np.diff(x)) ** 2)))  # Difference absolute standard deviation value
+    
+    if show:
+        plotfeature(signal, channel_name, fs, dasdv, "Difference absolute standard deviation value", step)
+    return(dasdv)
+
+def zcruce(X, th):
+    th = 0
+    cruce = 0
+    for cont in range(len(X) - 1):
+        can = X[cont] * X[cont + 1]
+        can2 = abs(X[cont] - X[cont + 1])
+        if can < 0 and can2 > th:
+            cruce = cruce + 1
+    return cruce
+
+def zero_crossing(signal, frame, step, channel_name, show=False):
+    zc = []
+    th = np.mean(signal) + 3 * np.std(signal)
+    for i in range(frame, signal.size, step):
+        x = signal[i - frame:i]
+        zc.append(zcruce(x, th))  # Zero-Crossing
+
+    if show:
+        plotfeature(signal, channel_name, fs, zc, "Zero-Crossing", step)
+    return(zc)
+
+def myopulse(signal, th):
+    umbral = signal >= th
+    return np.sum(umbral) / len(signal)
+
+def myopulse_percentage_rate(signal, frame, step, channel_name, show=False):
+    myop = []
+    th = np.mean(signal) + 3 * np.std(signal)
+    for i in range(frame, signal.size, step):
+        x = signal[i - frame:i]
+        myop.append(myopulse(x, th))  # Myopulse percentage rate
+    fs = 10
+    if show:
+        plotfeature(signal, channel_name, fs, myop, "Myopulse percentage rate", step)
+    return(myop)
 
 
+# freq domain feature extraction methods
 
+def next_power_of_2(x):
+    return 1 if x == 0 else 2 ** (x - 1).bit_length()
+
+
+def spectrum(signal, fs):
+    m = len(signal)
+    n = next_power_of_2(m)
+    y = np.fft.fft(signal, n)
+    yh = y[0:int(n / 2 - 1)]
+    fh = (fs / n) * np.arange(0, n / 2 - 1, 1)
+    power = np.real(yh * np.conj(yh) / n)
+
+    return fh, power
+
+def freq_ratio(frequency, power):
+    power_low = power[(frequency >= 30) & (frequency <= 250)]
+    power_high = power[(frequency > 250) & (frequency <= 500)]
+    ULC = np.sum(power_low)
+    UHC = np.sum(power_high)
+
+    return ULC / UHC
+
+def frequency_ratio(signal, frame, step, fs, channel_name, show=False):
+    fr = []
+    for i in range(frame, signal.size, step):
+        x = signal[i - frame:i]
+        frequency, power = spectrum(x, fs)
+
+        fr.append(freq_ratio(frequency, power))  # Frequency ratio
+   
+    if show:
+        plotfeature(signal, channel_name, fs, fr, "Frequency ratio", step)
+    return(fr)
+
+def mean_power(signal, frame, step, fs, channel_name, show=False):
+    mnp = []
+    for i in range(frame, signal.size, step):
+        x = signal[i - frame:i]
+        frequency, power = spectrum(x, fs)
+
+        mnp.append(np.sum(power) / len(power))  # Mean power
+   
+    if show:
+        plotfeature(signal, channel_name, fs, mnp, "Mean power", step)
+    return(mnp)
+
+def total_power(signal, frame, step, fs, channel_name, show=False):
+    tot = []
+    for i in range(frame, signal.size, step):
+        x = signal[i - frame:i]
+        frequency, power = spectrum(x, fs)
+
+        tot.append(np.sum(power))  # Total power
+   
+    if show:
+        plotfeature(signal, channel_name, fs, tot, "Total power", step)
+    return(tot)
+
+
+def mean_freq(frequency, power):
+    num = 0
+    den = 0
+    for i in range(int(len(power) / 2)):
+        num += frequency[i] * power[i]
+        den += power[i]
+
+    return num / den
+
+def median_freq(frequency, power):
+    power_total = np.sum(power) / 2
+    temp = 0
+    tol = 0.01
+    errel = 1
+    i = 0
+
+    while abs(errel) > tol:
+        temp += power[i]
+        errel = (power_total - temp) / power_total
+        i += 1
+        if errel < 0:
+            errel = 0
+            i -= 1
+
+    return frequency[i]
+
+def mean_frequency(signal, frame, step, fs, channel_name, show=False):
+    mnf = []
+    mdf = []
+    pkf = []
+    for i in range(frame, signal.size, step):
+        x = signal[i - frame:i]
+        frequency, power = spectrum(x, fs)
+
+        mnf.append(mean_freq(frequency, power))  # Mean frequency
+        mdf.append(median_freq(frequency, power))  # Median frequency
+        pkf.append(frequency[power.argmax()])  # Peak frequency
+   
+    if show:
+        plotfeature(signal, channel_name, fs, mnf, "Mean frequency", step)
+        plotfeature(signal, channel_name, fs, mdf, "Median frequency", step)
+        plotfeature(signal, channel_name, fs, pkf, "Peak frequency", step)
+    return(np.column_stack((mnf, mdf, pkf)))
+
+
+#time freq feature extraction method
+def wavelet_energy(x, mother, nivel):
+    coeffs = pywt.wavedecn(x, wavelet=mother, level=nivel)
+    arr, _ = pywt.coeffs_to_array(coeffs)
+    Et = np.sum(arr ** 2)
+    cA = coeffs[0]
+    Ea = 100 * np.sum(cA ** 2) / Et
+    Ed = []
+
+    for k in range(1, len(coeffs)):
+        cD = list(coeffs[k].values())
+        cD = np.asarray(cD)
+        Ed.append(100 * np.sum(cD ** 2) / Et)
+
+    return Ea, Ed
+
+def time_frequency_features_estimation(signal, frame, step):
+
+    h_wavelet = []
+
+    for i in range(frame, signal.size, step):
+        x = signal[i - frame:i]
+
+        E_a, E = wavelet_energy(x, 'db2', 4)
+        E.insert(0, E_a)
+        E = np.asarray(E) / 100
+
+        h_wavelet.append(-np.sum(E * np.log2(E)))
+        
+    plotfeature(signal, channel_name, 10000, h_wavelet, "time frequency feature", step)
+    return h_wavelet
+    
 #import dataset
 file_name = '/home/ubuntu/Documents/project/Btech_Project/Project documentation/datasets/set2/s1_2kg.mat'
 mat = scipy.io.loadmat(file_name)
@@ -161,46 +375,45 @@ step = 5000
 channel_name = 'biceps'
 fs = 10000
 
+"""
+  Time features
+    Compute time features from signal using sliding window method.
+    :param signal: numpy array signal.
+    :param frame: sliding window size.
+    :param step: sliding window step size.
+"""
 var = variance(filtered_emg1, frame, step, 'biceps', show=True)
 rms1 = rootmeansquare(filtered_emg1, frame, step, 'biceps', show=True)
-rms2 = rootmeansquare(filtered_emg2, frame, step, 'triceps', show=True)
+rms2 = rootmeansquare(filtered_emg1, frame, step, 'biceps', show=True)
 iemg = integralemg(filtered_emg1, frame, step, 'biceps', show=True)
-mav = meanabsolutevalue(filtered_emg2, frame, step, 'biceps', show=True)
-
-def wilson_amplitude(signal, th):
-    
-    """x = abs(np.diff(signal))
-    umbral = x >= th
-    return np.sum(umbral)"""
-    
-    
+mav = meanabsolutevalue(filtered_emg1, frame, step, 'biceps', show=True)
+log_det = log_detector(filtered_emg1, frame, step, 'biceps', show=True)
+wl = wave_length(filtered_emg1, frame, step, 'biceps', show=True)
+aac = avg_amplitude_change(filtered_emg1, frame, step, 'biceps', show=True)
+dasdv = difference_absolute_standard_deviation(filtered_emg1, frame, step, 'biceps', show=True)
+zc = zero_crossing(filtered_emg1, frame, step, 'biceps', show=True)
+myop = myopulse_percentage_rate(filtered_emg1, frame, step, 'biceps', show=True)
 
 
-def wilsonamplitude(signal, frame, step, channel_name, show=False):
-    wamp = []
-    #th = np.mean(signal) + 1 * np.std(signal)
-    th = 0.4
-    print(th)
-    for i in range(frame, signal.size, step):
-        x = signal[i - frame:i]
-        wamp.append(wilson_amplitude(x, th))  # Willison amplitude
-    
-    if show:
-        plotfeature(signal, channel_name, fs, wamp, "wilson Amplitude", step)
-    return(wamp)
-    
-wamp = wilsonamplitude(filtered_emg2, frame, step, 'biceps', show=True)
+"""
+  Frequency features
+    Compute frequency features from signal using sliding window method.
+    :param signal: numpy array signal.
+    :param fs: sampling frequency of the signal.
+    :param frame: sliding window size
+    :param step: sliding window step size
+"""
+fr = frequency_ratio(filtered_emg1, frame, step, sampling_frequency, 'biceps', show=True)
+mnp = mean_power(filtered_emg1, frame, step, sampling_frequency, 'biceps', show=True)
+tot = total_power(filtered_emg1, frame, step, sampling_frequency, 'biceps', show=True)
+mnf = mean_frequency(filtered_emg1, frame, step, sampling_frequency, 'biceps', show=True)
 
 
-wamp = []
-#th = np.mean(signal) + 1 * np.std(signal)
-th = 0.4
-for i in range(frame, filtered_emg1.size, step):
-    x = filtered_emg1[i - frame:i]
-    y = abs(np.diff(x))
-    umbral = y >= th
-    wamp.append(np.sum(umbral))  # Willison amplitude
-
-
-
-    
+"""
+  Time-frequency features 
+    Compute time-frequency features from signal using sliding window method.
+    :param signal: numpy array signal.
+    :param frame: sliding window size
+    :param step: sliding window step size
+"""
+time_frequency_matrix = time_frequency_features_estimation(filtered_emg2, frame, step)
