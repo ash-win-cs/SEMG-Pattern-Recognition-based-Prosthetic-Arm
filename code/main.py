@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import scipy.io# load mat files
 import matplotlib.pyplot as plt # plotting
 import numpy as np # linear algebra
 from scipy import signal
-import scipy.fftpack
 import math
 import pywt
 
@@ -93,7 +91,7 @@ def plotfeature(signal, channel_name, fs, feature, feature_name, step):
     plt.show()
     
     
-def variance(signal, frame, step, channel_name, show=False):
+def variance(signal, frame, step, fs, channel_name, show=False):
     var = []
     for i in range(frame, signal.size, step):
         x = signal[i - frame:i]
@@ -103,7 +101,7 @@ def variance(signal, frame, step, channel_name, show=False):
         plotfeature(signal, channel_name, fs, var, "variance", step)
     return(var)
 
-def rootmeansquare(signal, frame, step, channel_name, show=False):
+def rootmeansquare(signal, frame, step, fs, channel_name, show=False):
     rms = []
     for i in range(frame, signal.size, step):
         x = signal[i - frame:i]
@@ -113,7 +111,7 @@ def rootmeansquare(signal, frame, step, channel_name, show=False):
         plotfeature(signal, channel_name, fs, rms, "Root Mean Square", step)
     return(rms)
 
-def integralemg(signal, frame, step, channel_name, show=False):
+def integralemg(signal, frame, step, fs, channel_name, show=False):
     iemg = []
     for i in range(frame, signal.size, step):
         x = signal[i - frame:i]
@@ -123,7 +121,7 @@ def integralemg(signal, frame, step, channel_name, show=False):
         plotfeature(signal, channel_name, fs, iemg, "Integral", step)
     return(iemg)
 
-def meanabsolutevalue(signal, frame, step, channel_name, show=False):
+def meanabsolutevalue(signal, frame, step, fs, channel_name, show=False):
     mav = []
     for i in range(frame, signal.size, step):
         x = signal[i - frame:i]
@@ -133,7 +131,7 @@ def meanabsolutevalue(signal, frame, step, channel_name, show=False):
         plotfeature(signal, channel_name, fs, mav, "Mean  Absolute Value", step)
     return(mav)
 
-def log_detector(signal, frame, step, channel_name, show=False):
+def log_detector(signal, frame, step, fs, channel_name, show=False):
     log_det = []
     for i in range(frame, signal.size, step):
         x = signal[i - frame:i]
@@ -143,7 +141,7 @@ def log_detector(signal, frame, step, channel_name, show=False):
         plotfeature(signal, channel_name, fs, log_det, "Log Detector", step)
     return(log_det)
 
-def wave_length(signal, frame, step, channel_name, show=False):
+def wave_length(signal, frame, step, fs, channel_name, show=False):
     wl = []
     for i in range(frame, signal.size, step):
         x = signal[i - frame:i]
@@ -153,7 +151,7 @@ def wave_length(signal, frame, step, channel_name, show=False):
         plotfeature(signal, channel_name, fs, wl, "Wavelength", step)
     return(wl)
 
-def avg_amplitude_change(signal, frame, step, channel_name, show=False):
+def avg_amplitude_change(signal, frame, step, fs, channel_name, show=False):
     aac = []
     for i in range(frame, signal.size, step):
         x = signal[i - frame:i]
@@ -163,7 +161,7 @@ def avg_amplitude_change(signal, frame, step, channel_name, show=False):
         plotfeature(signal, channel_name, fs, aac, "Average Amplitude Change", step)
     return(aac)
 
-def difference_absolute_standard_deviation(signal, frame, step, channel_name, show=False):
+def difference_absolute_standard_deviation(signal, frame, step, fs, channel_name, show=False):
     dasdv = []
     for i in range(frame, signal.size, step):
         x = signal[i - frame:i]
@@ -183,7 +181,7 @@ def zcruce(X, th):
             cruce = cruce + 1
     return cruce
 
-def zero_crossing(signal, frame, step, channel_name, show=False):
+def zero_crossing(signal, frame, step, fs, channel_name, show=False):
     zc = []
     th = np.mean(signal) + 3 * np.std(signal)
     for i in range(frame, signal.size, step):
@@ -332,7 +330,7 @@ def wavelet_energy(x, mother, nivel):
 
     return Ea, Ed
 
-def time_frequency_features_estimation(signal, frame, step):
+def time_frequency_features_estimation(signal, frame, step, channel_name):
 
     h_wavelet = []
 
@@ -348,6 +346,8 @@ def time_frequency_features_estimation(signal, frame, step):
     plotfeature(signal, channel_name, 10000, h_wavelet, "time frequency feature", step)
     return h_wavelet
     
+
+'''
 #import dataset
 file_name = '/home/ubuntu/Documents/project/Btech_Project/Project documentation/datasets/set2/s1_2kg.mat'
 mat = scipy.io.loadmat(file_name)
@@ -417,3 +417,29 @@ mnf = mean_frequency(filtered_emg1, frame, step, sampling_frequency, 'biceps', s
     :param step: sliding window step size
 """
 time_frequency_matrix = time_frequency_features_estimation(filtered_emg2, frame, step)
+
+'''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
