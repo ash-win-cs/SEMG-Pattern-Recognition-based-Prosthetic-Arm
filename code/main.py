@@ -5,16 +5,24 @@ import numpy as np # linear algebra
 from scipy import signal
 import math
 import pywt
+import scipy.io# load mat files
 
 
 def plot_signal(x, samplerate, chname):
-    t = np.arange(0, len(x) / samplerate, 1 / samplerate)
-    plt.plot(t, x)
-    plt.autoscale(tight=True)
-    plt.xlabel('Time')
-    plt.ylabel('Amplitude (mV)')
-    plt.title(chname)
-    plt.show()
+    if type(x) != 'list':
+        x = [x]
+
+    fig = plt.figure(figsize=(10,5))    
+    for i in range(len(x)):
+        t = np.arange(0, len(x[i]) / samplerate, 1 / samplerate)
+        plt.subplot(1,len(x), i+1)
+        plt.plot(t, x[i])
+        plt.autoscale(tight=True)
+        plt.xlabel('Time')
+        plt.ylabel('Amplitude (mV)')
+        plt.title(chname)
+        #fig.set_size_inches(w=15,h=10)
+
     
 def notch_filter(x, samplerate, plot=False):
     #x = x - np.mean(x)
@@ -346,10 +354,9 @@ def time_frequency_features_estimation(signal, frame, step, channel_name):
     plotfeature(signal, channel_name, 10000, h_wavelet, "time frequency feature", step)
     return h_wavelet
     
-
 '''
 #import dataset
-file_name = '/home/ubuntu/Documents/project/Btech_Project/Project documentation/datasets/set2/s1_2kg.mat'
+file_name = '/home/ubuntu/Documents/project/Btech_Project/Project documentation/datasets/set2/s1_0kg.mat'
 mat = scipy.io.loadmat(file_name)
 mat = {k:v for k, v in mat.items() if k[0] != '_'}
 
@@ -369,9 +376,27 @@ filtered_emg1 = bp_filter(filtered_emg1, 10, 500, sampling_frequency, False)
 filtered_emg2 = notch_filter(emg2, sampling_frequency, False)
 filtered_emg2 = bp_filter(filtered_emg2, 10, 500, sampling_frequency, False)
 
+'''//////////////////////////////'''
+plot_signal([emg1, filtered_emg1], sampling_frequency, 'biceps')
+
+x = [filtered_emg1, rms1]
+samplerate = sampling_frequency
+chname = 'biceps brachii'
+
+fig = plt.figure(figsize=(10,5))    
+for i in range(len(x)):
+    t = np.arange(0, len(x[i]) / samplerate, 1 / samplerate)
+    plt.subplot(1,len(x), i+1)
+    plt.plot(t, x[i])
+    plt.autoscale(tight=True)
+    plt.xlabel('Time')
+    plt.ylabel('Amplitude (mV)')
+    plt.title(chname)
+    #fig.set_size_inches(w=15,h=10)
+'''//////////////////////////////'''
 # EMG Feature Extraction
-frame = 10000
-step = 5000
+frame = 2500
+step = 1250
 channel_name = 'biceps'
 fs = 10000
 
@@ -383,8 +408,8 @@ fs = 10000
     :param step: sliding window step size.
 """
 var = variance(filtered_emg1, frame, step, 'biceps', show=True)
-rms1 = rootmeansquare(filtered_emg1, frame, step, 'biceps', show=True)
-rms2 = rootmeansquare(filtered_emg1, frame, step, 'biceps', show=True)
+rms1 = rootmeansquare(filtered_emg1, frame, step, fs, 'biceps', show=False)
+rms2 = rootmeansquare(filtered_emg1, frame, step, fs, 'biceps', show=True)
 iemg = integralemg(filtered_emg1, frame, step, 'biceps', show=True)
 mav = meanabsolutevalue(filtered_emg1, frame, step, 'biceps', show=True)
 log_det = log_detector(filtered_emg1, frame, step, 'biceps', show=True)
@@ -417,8 +442,8 @@ mnf = mean_frequency(filtered_emg1, frame, step, sampling_frequency, 'biceps', s
     :param step: sliding window step size
 """
 time_frequency_matrix = time_frequency_features_estimation(filtered_emg2, frame, step)
-
 '''
+
 
 
 
