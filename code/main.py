@@ -376,7 +376,7 @@ filtered_emg1 = bp_filter(filtered_emg1, 10, 500, sampling_frequency, False)
 filtered_emg2 = notch_filter(emg2, sampling_frequency, False)
 filtered_emg2 = bp_filter(filtered_emg2, 10, 500, sampling_frequency, False)
 
-'''//////////////////////////////'''
+''''''//////////////////////////////''''''
 plot_signal([emg1, filtered_emg1], sampling_frequency, 'biceps')
 
 x = [filtered_emg1, rms1]
@@ -393,7 +393,7 @@ for i in range(len(x)):
     plt.ylabel('Amplitude (mV)')
     plt.title(chname)
     #fig.set_size_inches(w=15,h=10)
-'''//////////////////////////////'''
+''''''//////////////////////////////''''''
 # EMG Feature Extraction
 frame = 2500
 step = 1250
@@ -442,8 +442,8 @@ mnf = mean_frequency(filtered_emg1, frame, step, sampling_frequency, 'biceps', s
     :param step: sliding window step size
 """
 time_frequency_matrix = time_frequency_features_estimation(filtered_emg2, frame, step)
-'''
 
+'''
 
 
 
