@@ -353,6 +353,17 @@ def time_frequency_features_estimation(signal, frame, step, channel_name):
         
     plotfeature(signal, channel_name, 10000, h_wavelet, "time frequency feature", step)
     return h_wavelet
+
+def smooth(x,window_len=11,window='hanning'):
+    s=np.r_[x[window_len-1:0:-1],x,x[-1:-window_len:-1]]
+    #print(len(s))
+    if window == 'flat': #moving average
+        w=np.ones(window_len,'d')
+    else:
+        w=eval('np.'+window+'(window_len)')
+  
+    y=np.convolve(w/w.sum(),s,mode='valid')
+    return y   
     
 '''
 #import dataset
