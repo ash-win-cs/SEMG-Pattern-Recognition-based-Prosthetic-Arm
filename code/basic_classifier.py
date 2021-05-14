@@ -30,10 +30,10 @@ step = int(2500 / 2)
 filtered_emg1 = pp.notch_filter(emg1, sampling_frequency, False)
 filtered_emg1 = pp.bp_filter(filtered_emg1, 10, 500, sampling_frequency, False)
 
-filtered_emg2 = pp.notch_filter(emg2, sampling_frequency, False)
-filtered_emg2 = pp.bp_filter(filtered_emg2, 10, 500, sampling_frequency, False)
+# filtered_emg2 = pp.notch_filter(emg2, sampling_frequency, False)
+# filtered_emg2 = pp.bp_filter(filtered_emg2, 10, 500, sampling_frequency, False)
 
-rms1 = pp.rootmeansquare(filtered_emg1, frame, step, sampling_frequency, 'biceps', show=False)
+rms1 = pp.rootmeansquare(filtered_emg1, frame, step, sampling_frequency, 'biceps', show=True)
 '''mav1 = pp.meanabsolutevalue(filtered_emg1, frame, step, sampling_frequency, channel_name='biceps', show=False)
 var1 = pp.variance(filtered_emg1, frame, step, sampling_frequency, 'biceps', show=False)
 
@@ -45,10 +45,10 @@ mav3 = pp.meanabsolutevalue(emg3, frame, step, sampling_frequency, 'biceps', sho
 var3 = pp.variance(emg3, frame, step, sampling_frequency, 'biceps', show=False)
 '''
 
-import numpy as np
-filtered_emg2 = np.multiply(filtered_emg2, 10)
-plt.autoscale(tight=True)
-plt.plot(rms1)
+# import numpy as np
+# filtered_emg2 = np.multiply(filtered_emg2, 10)
+# plt.autoscale(tight=True)
+# plt.plot(rms1)
 #plt.plot(filtered_emg2)
 
 
@@ -65,19 +65,8 @@ for i in z:
 plt.autoscale(tight=True)
 plt.plot(pos)    
 
+import numpy as np
 
-def smooth(x,window_len=11,window='hanning'):
-    s=np.r_[x[window_len-1:0:-1],x,x[-1:-window_len:-1]]
-    #print(len(s))
-    if window == 'flat': #moving average
-        w=np.ones(window_len,'d')
-    else:
-        w=eval('np.'+window+'(window_len)')
-  
-    y=np.convolve(w/w.sum(),s,mode='valid')
-    return y   
-
-z = smooth(z, window_len=7,window='flat')
 plt.plot(z)    
 
 angle = pos[:-7]
