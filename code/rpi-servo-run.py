@@ -3,6 +3,8 @@ import numpy as np
 from scipy import signal
 import RPi.GPIO as GPIO # Import Raspberry Pi GPIO library
 from time import sleep # Import the sleep function from the time module
+import matplotlib.pyplot as plt # plotting
+import scipy.io# load mat files
 
 # import matplotlib.pyplot as plt # plotting
 # import main as pp
@@ -13,6 +15,7 @@ def read_csv(file_name):
 
 
 def fplot(x, x_filt):
+    samplerate = 10000
     t = np.arange(0, len(x) / samplerate, 1 / samplerate)
     plt.plot(t, x)
     plt.plot(t, x_filt, 'k')
@@ -59,7 +62,7 @@ def smooth(x,window_len=11,window='hanning'):
     y=np.convolve(w/w.sum(),s,mode='valid')
     return y
 
-def angle_classify(emg_rms):
+'''def angle_classify(emg_rms):
     arm_positions = []
     for i in emg_rms:
         if i <= 0.15 : 
@@ -68,7 +71,20 @@ def angle_classify(emg_rms):
             arm_positions.append(1)
         elif i > 0.3:
             arm_positions.append(2)
+    return(arm_positions)'''
+
+def angle_classify(emg_rms):
+    arm_positions = []
+    new_value=0
+    
+    for i in emg_rms:
+        new_value=((i-min(emg_rms))*150)/(max(emg_rms)-min(emg_rms))
+        #new_value= new_value*2
+        arm_positions.append(new_value)
+        new_value=0
+            
     return(arm_positions)
+
 
 def angle_map(positions):
     angles = []
@@ -105,21 +121,33 @@ def run_servo(arm_angles):
     pwm.stop()
     GPIO.cleanup()
 
-emg_biceps = read_csv("subj1.csv")
+#import dataset
+file_name = '/home/ubuntu/Documents/project/Btech_Project/Project documentation/datasets/set2/s1_2kg.mat'
+mat = scipy.io.loadmat(file_name)
+mat = {k:v for k, v in mat.items() if k[0] != '_'}
+emg_biceps = mat['data'][:,0]#[30000:,0]
+
+#emg_biceps = read_csv("subj1.csv")
 sampling_frequency = 10000
 frame = 2500
 step = int(2500 / 2)
 # femg_biceps = notch_filter(emg1)
-femg_biceps = bp_filter(notch_filter(emg1), 10, 500)
+femg_biceps = bp_filter(notch_filter(emg_biceps), 10, 500)
+
 remg_biceps = rootmeansquare(femg_biceps, frame, step)
 # plt.plot(remg_biceps)
 remg_biceps = smooth(remg_biceps, window_len=7,window='flat')
 remg_biceps = smooth(remg_biceps, window_len=7,window='flat')
 # plt.plot(remg_biceps)
 arm_positions = angle_classify(remg_biceps)
+plt.plot(arm_positions)
 # plt.plot(arm_positions)
 arm_angles = angle_map(arm_positions)
 run_servo(arm_angles)
 
+plt.subplot(1,2,1)
+plt.plot(remg_biceps)
+plt.subplot(1,2,2)
+plt.plot(arm_positions)
 
 
